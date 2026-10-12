@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SoundWave - Tab Volume & Audio Booster</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v20M17 5v14M7 8v8M2 11v2M22 11v2"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>SoundWave</h1>
+          <span class="brand-sub">Tab Studio</span>
+        </div>
+      </div>
+      <div class="header-status" id="tabStatusPill">
+        <span class="status-dot"></span>
+        <span class="status-text" id="statusText">Ready</span>
+      </div>
+    </header>
+
+    <!-- Notice / Warning Banner -->
+    <div class="notice-banner" id="noticeBanner" style="display: none;">
+      <span class="notice-icon">⚠️</span>
+      <div class="notice-content">
+        <span class="notice-text" id="noticeText"></span>
+      </div>
+      <button class="notice-close" id="noticeClose">&times;</button>
+    </div>
+
+    <!-- Tab View Navigation Switcher -->
+    <nav class="nav-tabs">
+      <button class="nav-btn active" id="btnNavCurrent" data-tab="current">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+        </svg>
+        Current Tab
+      </button>
+      <button class="nav-btn" id="btnNavMixer" data-tab="mixer">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="4" y1="21" x2="4" y2="14"/>
+          <line x1="4" y1="10" x2="4" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12" y2="3"/>
+          <line x1="20" y1="21" x2="20" y2="16"/>
+          <line x1="20" y1="12" x2="20" y2="3"/>
+          <line x1="1" y1="14" x2="7" y2="14"/>
+          <line x1="9" y1="8" x2="15" y2="8"/>
+          <line x1="17" y1="16" x2="23" y2="16"/>
+        </svg>
+        Tab Mixer <span class="badge-count" id="mixerCount">0</span>
+      </button>
+    </nav>
+
+    <!-- SECTION 1: Current Tab Controller -->
+    <main class="tab-pane active" id="paneCurrent">
+      <!-- Target Tab Card -->
+      <div class="target-tab-card">
+        <img class="tab-favicon" id="currentFavicon" src="../icons/icon16.png" alt="Favicon">
+        <div class="tab-info">
+          <div class="tab-title" id="currentTitle">Loading tab...</div>
+          <div class="tab-domain" id="currentDomain">chrome://</div>
+        </div>
+      </div>
+
+      <!-- Hero Volume Display -->
+      <div class="volume-display-card">
+        <div class="volume-level-container">
+          <span class="volume-number" id="volumeDisplay">100</span>
+          <span class="volume-unit">%</span>
+        </div>
+        <div class="volume-mode-tag" id="volumeTag">Standard</div>
+
+        <!-- Real-Time Spectrum Visualizer Canvas -->
+        <div class="visualizer-container">
+          <canvas id="visualizerCanvas" width="310" height="42"></canvas>
+        </div>
+      </div>
+
+      <!-- Main Slider -->
+      <div class="slider-wrapper">
+        <div class="slider-labels">
+          <span>0% (Mute)</span>
+          <span class="notch-100">100%</span>
+          <span>600% (Boost)</span>
+        </div>
+        <div class="range-container">
+          <input 
+            type="range" 
+            id="volumeSlider" 
+            min="0" 
+            max="600" 
+            step="1" 
+            value="100" 
+            class="custom-slider"
+          >
+          <div class="slider-track-fill" id="sliderFill"></div>
+          <div class="slider-notch-marker" title="Normal Volume (100%)"></div>
+        </div>
+      </div>
+
+      <!-- Quick Preset Buttons -->
+      <div class="preset-pills">
+        <button class="pill-btn" data-val="0">Mute</button>
+        <button class="pill-btn" data-val="50">50%</button>
+        <button class="pill-btn active-preset" data-val="100">100%</button>
+        <button class="pill-btn" data-val="150">150%</button>
+        <button class="pill-btn" data-val="250">250%</button>
+        <button class="pill-btn" data-val="400">400%</button>
+        <button class="pill-btn boost-pill" data-val="600">600% 🚀</button>
+      </div>
+
+      <!-- Sound Enhancement Toggles -->
+      <div class="enhancer-grid">
+        <button class="toggle-card" id="btnBassBoost">
+          <div class="toggle-icon">🔊</div>
+          <div class="toggle-details">
+            <span class="toggle-name">Bass Boost</span>
+            <span class="toggle-status" id="statusBass">OFF</span>
+          </div>
+        </button>
+
+        <button class="toggle-card" id="btnMono">
+          <div class="toggle-icon">🎧</div>
+          <div class="toggle-details">
+            <span class="toggle-name">Mono Audio</span>
+            <span class="toggle-status" id="statusMono">OFF</span>
+          </div>
+        </button>
+      </div>
+
+      <!-- Action Footer -->
+      <div class="tab-actions">
+        <button class="btn-mute" id="btnMute">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <line x1="23" y1="9" x2="17" y2="15"/>
+            <line x1="17" y1="9" x2="23" y2="15"/>
+          </svg>
+          <span id="textMute">Mute Tab</span>
+        </button>
+
+        <button class="btn-reset" id="btnReset" title="Detach capture & restore native Chrome audio">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+          </svg>
+          Restore Native
+        </button>
+      </div>
+    </main>
+
+    <!-- SECTION 2: Multi-Tab Mixer -->
+    <main class="tab-pane" id="paneMixer">
+      <div class="mixer-header-info">
+        <h3>Active Audio Tabs</h3>
+        <p>Control volume across all tabs playing sound right now.</p>
+      </div>
+
+      <div class="mixer-list" id="mixerList">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div class="mixer-empty" id="mixerEmpty" style="display: none;">
+        <div class="empty-icon">🔇</div>
+        <h4>No other tabs playing sound</h4>
+        <p>Tabs with active audio or booster streams will appear here automatically.</p>
+      </div>
+    </main>
+
+    <!-- Footer Status -->
+    <footer class="app-footer">
+      <span>SoundWave v1.0 • High Fidelity WebAudio</span>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
